@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spy Competitor AI — Competitor Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:         #0a0b0f;
+    --bg2:        #10121a;
+    --bg3:        #161a26;
+    --surface:    #1c2133;
+    --surface2:   #222840;
+    --border:     #2a3050;
+    --border2:    #364070;
+    --amber:      #f59e0b;
+    --amber2:     #fbbf24;
+    --amber-dim:  rgba(245,158,11,0.12);
+    --amber-glow: rgba(245,158,11,0.25);
+    --cyan:       #22d3ee;
+    --cyan-dim:   rgba(34,211,238,0.1);
+    --red:        #f43f5e;
+    --red-dim:    rgba(244,63,94,0.12);
+    --green:      #10b981;
+    --green-dim:  rgba(16,185,129,0.12);
+    --purple:     #a855f7;
+    --purple-dim: rgba(168,85,247,0.12);
+    --text:       #e2e8f0;
+    --text2:      #94a3b8;
+    --text3:      #64748b;
+    --r:          10px;
+    --r2:         16px;
+    --shadow:     0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: 'Outfit', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+
+  /* ── LAYOUT ── */
+  .shell  { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 230px; flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; overflow-y: auto;
+  }
+  .main   { margin-left: 230px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar-logo {
+    padding: 18px 16px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  }
+  .s-icon {
+    width: 32px; height: 32px; border-radius: 7px; background: var(--amber);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; box-shadow: 0 0 16px var(--amber-glow); flex-shrink: 0;
+  }
+  .s-brand { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800; line-height: 1.2; }
+  .s-brand span { color: var(--amber); }
+
+  .nav-wrap { padding: 14px 10px; flex: 1; }
+  .nav-label {
+    font-size: 10px; font-weight: 600; color: var(--text3);
+    letter-spacing: 1.2px; text-transform: uppercase;
+    padding: 0 8px; margin: 14px 0 5px;
+  }
+  .nav-label:first-child { margin-top: 0; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 10px; border-radius: 8px;
+    font-size: 14px; font-weight: 500; color: var(--text2);
+    cursor: pointer; transition: all 0.15s; margin-bottom: 2px;
+    user-select: none;
+  }
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+  .nav-item.active { background: var(--amber-dim); color: var(--amber); }
+  .nav-ico { width: 18px; text-align: center; font-size: 15px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; background: var(--amber); color: #0a0b0f;
+    font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+    min-width: 20px; text-align: center;
+  }
+  .sidebar-foot {
+    border-top: 1px solid var(--border); padding: 12px 10px; flex-shrink: 0;
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; cursor: default;
+  }
+  .u-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--amber-dim); border: 1px solid var(--amber);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: var(--amber); flex-shrink: 0;
+  }
+  .u-name  { font-size: 13px; font-weight: 600; }
+  .u-sub   { font-size: 11px; color: var(--text3); }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    height: 58px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 0 26px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 50; flex-shrink: 0;
+  }
+  .page-title { font-size: 17px; font-weight: 600; }
+  .topbar-r   { display: flex; align-items: center; gap: 10px; }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    padding: 8px 16px; background: var(--amber); color: #0a0b0f;
+    border: none; border-radius: 8px;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-primary:hover { background: var(--amber2); box-shadow: 0 0 16px var(--amber-glow); transform: translateY(-1px); }
+  .btn-primary:active { transform: none; }
+
+  .btn-outline {
+    padding: 8px 14px; background: transparent; color: var(--text2);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .btn-outline:hover { border-color: var(--amber); color: var(--amber); background: var(--amber-dim); }
+
+  .btn-danger {
+    padding: 8px 14px; background: var(--red-dim); color: var(--red);
+    border: 1px solid rgba(244,63,94,0.25); border-radius: 8px;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .btn-danger:hover { background: rgba(244,63,94,0.22); }
+
+  .scan-btn {
+    padding: 7px 13px; background: var(--cyan-dim); color: var(--cyan);
+    border: 1px solid rgba(34,211,238,0.2); border-radius: 8px;
+    font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .scan-btn:hover { background: rgba(34,211,238,0.16); }
+  .scan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ── CONTENT AREA ── */
+  .content { padding: 26px; flex: 1; }
+
+  /* ── API KEY BAR ── */
+  .api-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .api-bar-label { font-size: 13px; font-weight: 700; color: var(--amber); white-space: nowrap; }
+  .api-bar input {
+    flex: 1; min-width: 220px; padding: 8px 12px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 7px;
+    color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 12px; outline: none;
+  }
+  .api-bar input:focus { border-color: var(--amber); }
+
+  /* ── PAGES ── */
+  .page { display: none; }
+  .page.active { display: block; animation: fadeIn 0.2s ease; }
+
+  /* ── STATS GRID ── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 26px; }
+  @media(max-width:900px){ .stats-grid { grid-template-columns: repeat(2,1fr); } }
+  .stat-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+    padding: 18px 20px; position: relative; overflow: hidden;
+  }
+  .stat-card::after {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .stat-card.c-amber::after { background: var(--amber); }
+  .stat-card.c-cyan::after  { background: var(--cyan); }
+  .stat-card.c-green::after { background: var(--green); }
+  .stat-card.c-red::after   { background: var(--red); }
+  .stat-ico  { position: absolute; right: 16px; top: 14px; font-size: 20px; opacity: 0.35; }
+  .stat-lbl  { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .stat-val  { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+  .stat-sub  { font-size: 12px; color: var(--text3); }
+
+  /* ── SECTION HEADER ── */
+  .sec-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sec-ttl  { font-size: 15px; font-weight: 600; }
+  .sec-lnk  { font-size: 13px; color: var(--amber); cursor: pointer; }
+  .sec-lnk:hover { text-decoration: underline; }
+
+  /* ── TWO COL ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media(max-width:800px){ .two-col { grid-template-columns: 1fr; } }
+
+  /* ── COMPETITOR CARD ── */
+  .comp-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(290px,1fr)); gap: 14px; }
+  .comp-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+    padding: 18px 20px; cursor: pointer; transition: all 0.2s;
+  }
+  .comp-card:hover { border-color: var(--amber); transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,0,0,0.3); }
+  .cc-top  { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+  .cc-avi  {
+    width: 40px; height: 40px; border-radius: 10px; background: var(--surface);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .cc-live {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; color: var(--green);
+    background: var(--green-dim); padding: 3px 8px; border-radius: 20px;
+  }
+  .cc-live::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; }
+  .cc-name { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+  .cc-url  { font-size: 12px; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .cc-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
+  .pg-tag  {
+    font-size: 11px; font-weight: 500; padding: 3px 8px;
+    border-radius: 6px; background: var(--surface); color: var(--text2); border: 1px solid var(--border);
+  }
+  .cc-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .cc-stat  { font-size: 12px; color: var(--text3); }
+  .cc-stat strong { color: var(--text); }
+  .chg-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px;
+    background: var(--red-dim); color: var(--red); border: 1px solid rgba(244,63,94,0.2);
+  }
+
+  /* ── INSIGHT CARD ── */
+  .insight-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+    padding: 18px 20px; margin-bottom: 12px; transition: border 0.15s;
+  }
+  .insight-card:hover { border-color: var(--border2); }
+  .ic-hdr  { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+  .ic-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .ic-comp { font-size: 13px; font-weight: 700; color: var(--amber); }
+  .ic-sep  { color: var(--text3); font-size: 12px; }
+  .ic-pg   { font-size: 13px; color: var(--text2); }
+  .ic-date { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono',monospace; white-space: nowrap; }
+  .type-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 6px; }
+  .type-badge.pricing   { background: var(--amber-dim); color: var(--amber); }
+  .type-badge.features  { background: var(--cyan-dim);  color: var(--cyan); }
+  .type-badge.messaging { background: var(--purple-dim);color: var(--purple); }
+  .type-badge.blog      { background: var(--green-dim); color: var(--green); }
+  .ic-summary { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.55; margin-bottom: 10px; }
+  .ic-grid    { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  @media(max-width:600px){ .ic-grid { grid-template-columns: 1fr; } }
+  .ic-box     { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 10px 13px; }
+  .ic-box-lbl { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+  .ic-box-txt { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .ic-action  { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.2); border-radius: 8px; padding: 10px 13px; margin-top: 8px; }
+  .ic-act-lbl { font-size: 10px; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 4px; }
+  .ic-act-txt { font-size: 13px; color: var(--amber2); line-height: 1.5; }
+
+  /* ── CARD BLOCK ── */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 18px 20px; }
+  .card-ttl { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 14px; }
+
+  /* ── DETAIL ── */
+  .detail-hdr { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 24px; flex-wrap: wrap; }
+  .detail-avi  { width: 56px; height: 56px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .detail-info h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .detail-url  { font-family: 'JetBrains Mono',monospace; font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .detail-acts { margin-left: auto; display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+
+  /* ── MONITOR ROW ── */
+  .mon-row { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .mon-row:last-child { border-bottom: none; }
+  .mon-lbl { font-size: 14px; font-weight: 500; }
+  .mon-url { font-size: 11px; color: var(--text3); font-family: 'JetBrains Mono',monospace; }
+  .dot-live { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+
+  /* ── TIMELINE ── */
+  .tl-item { display: flex; gap: 14px; padding-bottom: 22px; position: relative; }
+  .tl-item::before { content: ''; position: absolute; left: 14px; top: 30px; bottom: 0; width: 1px; background: var(--border); }
+  .tl-item:last-child::before { display: none; }
+  .tl-dot {
+    width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 13px;
+    border: 2px solid var(--border); background: var(--bg2);
+  }
+  .tl-dot.amber { border-color: var(--amber); background: var(--amber-dim); }
+  .tl-dot.cyan  { border-color: var(--cyan);  background: var(--cyan-dim); }
+  .tl-dot.green { border-color: var(--green); background: var(--green-dim); }
+  .tl-dot.purple{ border-color: var(--purple);background: var(--purple-dim); }
+  .tl-body { flex: 1; padding-top: 3px; }
+  .tl-date { font-size: 11px; font-family: 'JetBrains Mono',monospace; color: var(--text3); margin-bottom: 3px; }
+  .tl-ttl  { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .tl-desc { font-size: 13px; color: var(--text2); line-height: 1.5; }
+  .tl-insight {
+    margin-top: 10px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px;
+  }
+  .tl-ins-lbl { font-size: 10px; font-weight: 600; color: var(--amber); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 7px; }
+  .tl-ins-row { font-size: 13px; color: var(--text2); margin-bottom: 4px; line-height: 1.5; }
+  .tl-ins-row strong { color: var(--text); }
+  .tl-ins-act { background: var(--amber-dim); border-radius: 6px; padding: 7px 10px; margin-top: 8px; font-size: 13px; color: var(--amber2); border: 1px solid rgba(245,158,11,0.15); }
+
+  /* ── MODAL ── */
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(5px); z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+    width: 500px; max-width: 96vw; max-height: 92vh; overflow-y: auto;
+    box-shadow: 0 30px 90px rgba(0,0,0,0.7); animation: fadeUp 0.22s ease;
+  }
+  .modal-hdr { padding: 20px 22px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-ttl { font-size: 17px; font-weight: 700; }
+  .modal-x {
+    width: 28px; height: 28px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px; color: var(--text2); transition: all 0.15s;
+  }
+  .modal-x:hover { border-color: var(--red); color: var(--red); }
+  .modal-body { padding: 22px; }
+  .modal-foot { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* form fields */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field input[type=text], .field input[type=url], .field input[type=password] {
+    width: 100%; padding: 10px 13px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: var(--r);
+    color: var(--text); font-family: 'Outfit',sans-serif; font-size: 14px; outline: none;
+    transition: border 0.2s;
+  }
+  .field input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-dim); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .chk-grid  { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chk-item  {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px 12px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; cursor: pointer; transition: all 0.15s;
+  }
+  .chk-item:hover { border-color: var(--amber); background: var(--amber-dim); }
+  .chk-item input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--amber); cursor: pointer; flex-shrink: 0; }
+  .chk-item label { font-size: 13px; cursor: pointer; font-weight: 500; }
+
+  /* ── FILTERS ── */
+  .filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+  .f-lbl { font-size: 12px; color: var(--text3); font-weight: 600; }
+  select.f-sel {
+    padding: 7px 11px; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'Outfit',sans-serif; font-size: 13px;
+    outline: none; cursor: pointer;
+  }
+  select.f-sel:focus { border-color: var(--amber); }
+
+  /* ── REPORTS TABLE ── */
+  .r-table { width: 100%; border-collapse: collapse; }
+  .r-table th { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; }
+  .r-table td { padding: 12px 14px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  .r-table tr:last-child td { border-bottom: none; }
+  .r-table tbody tr:hover td { background: var(--surface); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty-ico { font-size: 44px; margin-bottom: 14px; opacity: 0.45; }
+  .empty-ttl { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .empty-txt { font-size: 14px; color: var(--text2); max-width: 300px; margin: 0 auto 22px; line-height: 1.55; }
+
+  /* ── BACK ── */
+  .back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--text2); cursor: pointer;
+    margin-bottom: 20px; transition: color 0.15s;
+  }
+  .back:hover { color: var(--amber); }
+
+  /* ── SETTINGS ── */
+  .settings-wrap { max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── DISCOVER PAGE ── */
+  .discover-wrap { max-width: 720px; }
+  .discover-hero {
+    background: linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(34,211,238,0.06) 100%);
+    border: 1px solid var(--border); border-radius: var(--r2); padding: 28px 28px 24px;
+    margin-bottom: 22px; position: relative; overflow: hidden;
+  }
+  .discover-hero::before {
+    content: '🕵️'; position: absolute; right: 24px; top: 50%; transform: translateY(-50%);
+    font-size: 64px; opacity: 0.12;
+  }
+  .discover-hero h2 { font-family:'Syne',sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .discover-hero p  { font-size: 14px; color: var(--text2); line-height: 1.6; max-width: 480px; }
+
+  .discover-form { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2); padding: 22px; margin-bottom: 22px; }
+  .discover-form-ttl { font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+  .discover-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  @media(max-width:600px){ .discover-fields { grid-template-columns: 1fr; } }
+
+  .type-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .type-pill {
+    padding: 7px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--text2);
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .type-pill:hover  { border-color: var(--amber); color: var(--amber); }
+  .type-pill.active { border-color: var(--amber); background: var(--amber-dim); color: var(--amber); }
+
+  .disc-results { display: flex; flex-direction: column; gap: 14px; }
+  .disc-section-hdr {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 4px;
+  }
+  .disc-section-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .disc-section-dot.direct   { background: var(--red); }
+  .disc-section-dot.indirect { background: var(--amber); }
+  .disc-section-dot.replacement { background: var(--purple); }
+  .disc-section-dot.aspirational { background: var(--cyan); }
+  .disc-section-label { font-size: 13px; font-weight: 700; }
+  .disc-section-desc  { font-size: 12px; color: var(--text3); margin-left: auto; }
+
+  .disc-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r2);
+    padding: 16px 18px; display: flex; align-items: flex-start; gap: 14px;
+    transition: border 0.15s;
+  }
+  .disc-card:hover { border-color: var(--border2); }
+  .disc-card-ico  {
+    width: 38px; height: 38px; border-radius: 9px; background: var(--surface);
+    border: 1px solid var(--border); display: flex; align-items: center;
+    justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .disc-card-info { flex: 1; min-width: 0; }
+  .disc-card-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .disc-card-url  { font-size: 11px; color: var(--text3); font-family:'JetBrains Mono',monospace; margin-bottom: 6px; }
+  .disc-card-why  { font-size: 13px; color: var(--text2); line-height: 1.55; margin-bottom: 8px; }
+  .disc-card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .disc-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 5px;
+    background: var(--surface); color: var(--text3); border: 1px solid var(--border);
+  }
+  .disc-card-actions { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+  .disc-add-btn {
+    padding: 7px 12px; background: var(--amber); color: #0a0b0f;
+    border: none; border-radius: 7px; font-family:'Outfit',sans-serif;
+    font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .disc-add-btn:hover  { background: var(--amber2); }
+  .disc-add-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--surface); color: var(--text3); }
+  .disc-skip-btn {
+    padding: 6px 12px; background: transparent; color: var(--text3);
+    border: 1px solid var(--border); border-radius: 7px; font-family:'Outfit',sans-serif;
+    font-size: 12px; cursor: pointer; transition: all 0.15s;
+  }
+  .disc-skip-btn:hover { border-color: var(--border2); color: var(--text2); }
+
+  .disc-type-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .disc-type-badge.direct      { background: rgba(244,63,94,0.12);   color: var(--red); }
+  .disc-type-badge.indirect    { background: var(--amber-dim);        color: var(--amber); }
+  .disc-type-badge.replacement { background: var(--purple-dim);       color: var(--purple); }
+  .disc-type-badge.aspirational{ background: var(--cyan-dim);         color: var(--cyan); }
+
+  .disc-loading {
+    text-align: center; padding: 50px 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .disc-loading-ring {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border); border-top-color: var(--amber);
+    border-radius: 50%; animation: spin 0.9s linear infinite;
+  }
+  .disc-loading-txt  { font-size: 15px; font-weight: 600; }
+  .disc-loading-sub  { font-size: 13px; color: var(--text3); }
+
+  /* ── SPINNER ── */
+  .spin {
+    width: 13px; height: 13px; border: 2px solid rgba(34,211,238,0.3);
+    border-top-color: var(--cyan); border-radius: 50%; animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  .spin-amber { border: 2px solid rgba(245,158,11,0.3); border-top-color: var(--amber); }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; bottom: 22px; right: 22px; z-index: 9999;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 11px 16px; font-size: 14px; display: flex; align-items: center; gap: 10px;
+    box-shadow: var(--shadow); max-width: 340px;
+    transform: translateY(14px); opacity: 0; transition: all 0.3s; pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: var(--green); }
+  .toast.warn    { border-color: var(--amber); }
+  .toast.error   { border-color: var(--red); }
+
+  /* ── KEYFRAMES ── */
+  @keyframes fadeIn  { from { opacity:0; }                        to { opacity:1; } }
+  @keyframes fadeUp  { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes spin    { to   { transform:rotate(360deg); } }
+  @keyframes pulse   { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
+
+  /* ── MOBILE ── */
+  .hamburger {
+    display: none; width: 36px; height: 36px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    align-items: center; justify-content: center; cursor: pointer;
+    font-size: 18px; flex-shrink: 0; transition: all 0.15s;
+  }
+  .hamburger:hover { border-color: var(--amber); }
+  .sidebar-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 99; backdrop-filter: blur(2px);
+  }
+  .sidebar-overlay.open { display: block; }
+
+  @media (max-width: 680px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s ease;
+      z-index: 200;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .hamburger { display: flex; }
+    .content { padding: 16px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .two-col { grid-template-columns: 1fr; }
+    .api-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+    .api-bar input { min-width: unset; }
+    .detail-hdr { flex-direction: column; }
+    .detail-acts { margin-left: 0; }
+    .discover-fields { grid-template-columns: 1fr; }
+    .disc-card { flex-direction: column; }
+    .disc-card-actions { flex-direction: row; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mobile sidebar overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ══════════════════ SHELL ══════════════════ -->
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <div class="s-icon">🕵️</div>
+      <div class="s-brand">Spy Competitor<br><span>AI</span></div>
+    </div>
+
+    <div class="nav-wrap">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-page="dashboard" onclick="gotoPage('dashboard')">
+        <span class="nav-ico">⊞</span> Dashboard
+      </div>
+
+      <div class="nav-label">Intelligence</div>
+      <div class="nav-item" data-page="discover" onclick="gotoPage('discover')">
+        <span class="nav-ico">🔭</span> Discover
+        <span style="font-size:9px;font-weight:700;background:var(--cyan);color:#0a0b0f;padding:1px 5px;border-radius:8px;margin-left:auto">NEW</span>
+      </div>
+      <div class="nav-item" data-page="competitors" onclick="gotoPage('competitors')">
+        <span class="nav-ico">🎯</span> Competitors
+        <span class="nav-badge" id="badge-comps">0</span>
+      </div>
+      <div class="nav-item" data-page="insights" onclick="gotoPage('insights')">
+        <span class="nav-ico">💡</span> Insights
+        <span class="nav-badge" id="badge-insights">0</span>
+      </div>
+      <div class="nav-item" data-page="reports" onclick="gotoPage('reports')">
+        <span class="nav-ico">📋</span> Reports
+      </div>
+
+      <div class="nav-label">Account</div>
+      <div class="nav-item" data-page="settings" onclick="gotoPage('settings')">
+        <span class="nav-ico">⚙️</span> Settings
+      </div>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="user-row">
+        <div class="u-avatar">S</div>
+        <div>
+          <div class="u-name">Spy Competitor AI</div>
+          <div class="u-sub">Free Plan</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- topbar -->
+    <div class="topbar">
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="topbar-r">
+        <div class="hamburger" onclick="openSidebar()" title="Menu">☰</div>
+        <button class="btn-primary" onclick="openAddModal()">＋ Add Competitor</button>
+      </div>
+    </div>
+
+    <!-- content -->
+    <div class="content">
+
+      <!-- API key bar (always visible) -->
+      <div class="api-bar">
+        <span class="api-bar-label">🔑 Anthropic API Key</span>
+        <input type="password" id="api-key-input" placeholder="sk-ant-... (paste to enable AI analysis)">
+        <button class="btn-primary" onclick="saveApiKey()" style="padding:8px 14px">Save</button>
+      </div>
+
+      <!-- ───── DASHBOARD ───── -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card c-amber">
+            <div class="stat-ico">🎯</div>
+            <div class="stat-lbl">Competitors Tracked</div>
+            <div class="stat-val" id="s-comps" style="color:var(--amber)">0</div>
+            <div class="stat-sub">active watchlists</div>
+          </div>
+          <div class="stat-card c-cyan">
+            <div class="stat-ico">🔄</div>
+            <div class="stat-lbl">Changes This Week</div>
+            <div class="stat-val" id="s-changes" style="color:var(--cyan)">0</div>
+            <div class="stat-sub">auto-detected</div>
+          </div>
+          <div class="stat-card c-green">
+            <div class="stat-ico">💡</div>
+            <div class="stat-lbl">AI Insights</div>
+            <div class="stat-val" id="s-insights" style="color:var(--green)">0</div>
+            <div class="stat-sub">strategy reports</div>
+          </div>
+          <div class="stat-card c-red">
+            <div class="stat-ico">📡</div>
+            <div class="stat-lbl">Pages Monitored</div>
+            <div class="stat-val" id="s-pages" style="color:var(--red)">0</div>
+            <div class="stat-sub">live watchers</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <div class="sec-hdr">
+              <div class="sec-ttl">Recent Competitors</div>
+              <div class="sec-lnk" onclick="gotoPage('competitors')">View all →</div>
+            </div>
+            <div id="dash-comps"></div>
+          </div>
+          <div>
+            <div class="sec-hdr">
+              <div class="sec-ttl">Latest Insights</div>
+              <div class="sec-lnk" onclick="gotoPage('insights')">View all →</div>
+            </div>
+            <div id="dash-insights"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── COMPETITORS ───── -->
+      <div class="page" id="page-competitors">
+        <div class="sec-hdr" style="margin-bottom:18px">
+          <div>
+            <div class="sec-ttl">All Competitors</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:2px">Monitor your competitive landscape in real time</div>
+          </div>
+          <button class="btn-primary" onclick="openAddModal()">＋ Add Competitor</button>
+        </div>
+        <div class="comp-grid" id="comp-grid"></div>
+      </div>
+
+      <!-- ───── DETAIL ───── -->
+      <div class="page" id="page-detail">
+        <div class="back" onclick="gotoPage('competitors')">← Back to Competitors</div>
+        <div id="detail-body"></div>
+      </div>
+
+      <!-- ───── INSIGHTS ───── -->
+      <div class="page" id="page-insights">
+        <div class="sec-hdr" style="margin-bottom:18px;flex-wrap:wrap;gap:12px">
+          <div>
+            <div class="sec-ttl">All Insights</div>
+            <div style="font-size:13px;color:var(--text3);margin-top:2px">AI-powered analysis of competitor changes</div>
+          </div>
+          <div class="filters" style="margin:0">
+            <span class="f-lbl">Filter:</span>
+            <select class="f-sel" id="f-comp" onchange="renderInsights()">
+              <option value="">All Competitors</option>
+            </select>
+            <select class="f-sel" id="f-type" onchange="renderInsights()">
+              <option value="">All Types</option>
+              <option value="pricing">Pricing</option>
+              <option value="features">Features</option>
+              <option value="messaging">Messaging</option>
+              <option value="blog">Blog</option>
+            </select>
+          </div>
+        </div>
+        <div id="insights-body"></div>
+      </div>
+
+      <!-- ───── REPORTS ───── -->
+      <div class="page" id="page-reports">
+        <div class="sec-hdr"><div class="sec-ttl">Change Reports</div></div>
+        <div class="card">
+          <table class="r-table">
+            <thead>
+              <tr>
+                <th>Competitor</th><th>Page</th><th>Type</th><th>Detected</th><th>AI Analysis</th>
+              </tr>
+            </thead>
+            <tbody id="reports-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ───── SETTINGS ───── -->
+      <div class="page" id="page-settings">
+        <div class="sec-hdr"><div class="sec-ttl">Settings</div></div>
+        <div class="settings-wrap">
+          <div class="card">
+            <div class="card-ttl">Anthropic API Key</div>
+            <div class="field">
+              <label>API Key</label>
+              <input type="password" id="settings-key" placeholder="sk-ant-...">
+            </div>
+            <div style="display:flex;gap:10px;margin-top:4px">
+              <button class="btn-primary" onclick="saveKeyFromSettings()">Save Key</button>
+              <button class="btn-outline" onclick="testKey()">Test Connection</button>
+            </div>
+            <div style="margin-top:12px;font-size:12px;color:var(--text3);line-height:1.6">
+              Your API key is stored in memory only (not persisted). Get yours at
+              <a href="https://console.anthropic.com" target="_blank" style="color:var(--amber)">console.anthropic.com</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-ttl">Monitoring Preferences</div>
+            <div class="mon-row">
+              <div><div class="mon-lbl">Scan Frequency</div><div class="mon-url">How often to auto-check for changes</div></div>
+              <select class="f-sel"><option>Every 6 hours</option><option>Every 12 hours</option><option>Daily</option></select>
+            </div>
+            <div class="mon-row">
+              <div><div class="mon-lbl">Email Notifications</div><div class="mon-url">Alert when changes detected</div></div>
+              <input type="checkbox" checked style="width:16px;height:16px;accent-color:var(--amber);cursor:pointer">
+            </div>
+            <div class="mon-row">
+              <div><div class="mon-lbl">AI Auto-Analysis</div><div class="mon-url">Automatically generate insights on change</div></div>
+              <input type="checkbox" style="width:16px;height:16px;accent-color:var(--amber);cursor:pointer">
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-ttl">About</div>
+            <div style="font-size:14px;color:var(--text2);line-height:1.7">
+              <strong style="color:var(--text)">Spy Competitor AI</strong> monitors competitor websites and
+              uses Claude AI to generate actionable intelligence reports when changes are detected.
+            </div>
+            <div style="margin-top:12px">
+              <button class="btn-danger" onclick="clearAllData()">🗑 Clear All Data</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ───── DISCOVER COMPETITORS ───── -->
+      <div class="page" id="page-discover">
+        <div class="discover-wrap">
+
+          <div class="discover-hero">
+            <h2>Discover Your Competitors</h2>
+            <p>Tell us about your product and we'll use AI to map out all your competitors — direct, indirect, replacement, and emerging threats you might not know about yet.</p>
+          </div>
+
+          <div class="discover-form">
+            <div class="discover-form-ttl">Describe Your Product</div>
+            <div class="discover-fields">
+              <div class="field" style="margin:0">
+                <label>Your Product / Company Name</label>
+                <input type="text" id="disc-product" placeholder="e.g. Notion, Slack, my SaaS app">
+              </div>
+              <div class="field" style="margin:0">
+                <label>Your Target Audience</label>
+                <input type="text" id="disc-audience" placeholder="e.g. remote teams, freelancers, B2B SaaS">
+              </div>
+            </div>
+            <div class="field" style="margin-bottom:16px">
+              <label>What problem does your product solve?</label>
+              <input type="text" id="disc-problem" placeholder="e.g. helps teams manage projects and collaborate asynchronously">
+            </div>
+            <div class="field" style="margin-bottom:16px">
+              <label>Which competitor types do you want to find?</label>
+              <div class="type-pills">
+                <div class="type-pill active" data-type="direct"       onclick="togglePill(this)">🎯 Direct</div>
+                <div class="type-pill active" data-type="indirect"     onclick="togglePill(this)">🌀 Indirect</div>
+                <div class="type-pill active" data-type="replacement"  onclick="togglePill(this)">🔄 Replacement</div>
+                <div class="type-pill active" data-type="aspirational" onclick="togglePill(this)">🚀 Emerging Threats</div>
+              </div>
+            </div>
+            <button class="btn-primary" id="disc-run-btn" onclick="runDiscover()">
+              🔭 Find My Competitors
+            </button>
+          </div>
+
+          <div id="disc-output"></div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /shell -->
+
+<!-- ══════════════════ MODAL: ADD COMPETITOR ══════════════════ -->
+<div class="modal-bg" id="add-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-heading">
+    <div class="modal-hdr">
+      <div class="modal-ttl" id="modal-heading">Add Competitor</div>
+      <div class="modal-x" onclick="closeAddModal()" title="Close">✕</div>
+    </div>
+    <div class="modal-body">
+      <div class="field-row" style="margin-bottom:14px">
+        <div class="field" style="margin:0">
+          <label>Competitor Name</label>
+          <input type="text" id="m-name" placeholder="e.g. Notion, Stripe, Linear">
+        </div>
+        <div class="field" style="margin:0">
+          <label>Website URL</label>
+          <input type="text" id="m-url" placeholder="https://notion.so">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label style="margin-bottom:10px;display:block">Pages to Monitor</label>
+        <div class="chk-grid">
+          <div class="chk-item">
+            <input type="checkbox" id="p-home" checked>
+            <label for="p-home">🏠 Homepage</label>
+          </div>
+          <div class="chk-item">
+            <input type="checkbox" id="p-pricing" checked>
+            <label for="p-pricing">💰 Pricing</label>
+          </div>
+          <div class="chk-item">
+            <input type="checkbox" id="p-features">
+            <label for="p-features">⚡ Features</label>
+          </div>
+          <div class="chk-item">
+            <input type="checkbox" id="p-blog">
+            <label for="p-blog">📝 Blog</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeAddModal()">Cancel</button>
+      <button class="btn-primary" onclick="addCompetitor()">🚀 Start Monitoring</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-msg">Done</span>
+</div>
+
+<!-- ══════════════════ SCRIPT ══════════════════ -->
+<script>
+// ════════════════════════════════════════
+// GLOBAL STATE
+// ════════════════════════════════════════
+const APP = {
+  apiKey: '',
+  currentPage: 'dashboard',
+  detailId: null,
+  competitors: [],   // { id, name, url, emoji, pages[], addedAt, changes[] }
+  // change: { id, page, type, date, summary, insight|null }
+  // insight: { whatChanged, strategic, strategy, action }
+};
+
+// ════════════════════════════════════════
+// CONSTANTS
+// ════════════════════════════════════════
+const EMOJIS = ['🦁','🐯','🦊','🐉','🦅','🐺','🦈','🔥','⚡','🌪️','🎲','🏆'];
+const PAGE_EMOJI = { homepage:'🏠', pricing:'💰', features:'⚡', blog:'📝' };
+
+const FAKE_CHANGES = [
+  { page:'Pricing',   type:'pricing',   summary:'Enterprise tier added at $149/seat/month with unlimited everything' },
+  { page:'Pricing',   type:'pricing',   summary:'Free plan limited to 3 active projects (was unlimited)' },
+  { page:'Pricing',   type:'pricing',   summary:'Annual billing discount raised from 20% to 35%' },
+  { page:'Homepage',  type:'messaging', summary:'Hero headline changed to "The AI-native workspace for modern teams"' },
+  { page:'Homepage',  type:'messaging', summary:'Social proof updated: "50,000 teams" → "120,000 teams worldwide"' },
+  { page:'Features',  type:'features',  summary:'AI Summarization feature announced — auto-summarizes long docs' },
+  { page:'Features',  type:'features',  summary:'Real-time collaboration now on all paid plans (was Enterprise only)' },
+  { page:'Blog',      type:'blog',      summary:'New post: "Why we\'re betting everything on AI integrations in 2025"' },
+  { page:'Blog',      type:'blog',      summary:'New post: "How to 10x your team\'s productivity with async workflows"' },
+];
+
+// ════════════════════════════════════════
+// SEED DATA
+// ════════════════════════════════════════
+function seedData() {
+  APP.competitors = [
+    {
+      id:'seed-1', name:'Notion', url:'https://notion.so', emoji:'🦁',
+      pages:['Homepage','Pricing','Blog'],
+      addedAt: daysAgo(14),
+      changes:[
+        { id:'s1c1', page:'Pricing',  type:'pricing',   date:daysAgo(3),  summary:'New "AI" add-on plan at $8/user/month',              insight:null },
+        { id:'s1c2', page:'Blog',     type:'blog',      date:daysAgo(8),  summary:'New post: "Building the future of collaborative AI"', insight:null },
+      ]
+    },
+    {
+      id:'seed-2', name:'Linear', url:'https://linear.app', emoji:'🐯',
+      pages:['Homepage','Pricing','Features'],
+      addedAt: daysAgo(10),
+      changes:[
+        { id:'s2c1', page:'Features', type:'features',  date:daysAgo(2),  summary:'Launched "Linear Insights" — AI-powered sprint analytics', insight:null },
+        { id:'s2c2', page:'Homepage', type:'messaging', date:daysAgo(6),  summary:'Hero changed: "Issue tracking" → "System for modern software teams"', insight:null },
+      ]
+    },
+    {
+      id:'seed-3', name:'Loom', url:'https://loom.com', emoji:'🦊',
+      pages:['Homepage','Pricing'],
+      addedAt: daysAgo(6),
+      changes:[
+        { id:'s3c1', page:'Pricing',  type:'pricing',   date:daysAgo(1),  summary:'Free plan reduced from 25 videos to 5 videos/month', insight:null },
+      ]
+    },
+  ];
+}
+
+function daysAgo(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString();
+}
+
+function fmtDate(iso) {
+  return new Date(iso).toLocaleDateString('en-US',{ month:'short', day:'numeric', year:'numeric' });
+}
+
+function uid() { return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2,7); }
+
+// ════════════════════════════════════════
+// MOBILE SIDEBAR
+// ════════════════════════════════════════
+function openSidebar() {
+  document.querySelector('.sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('open');
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+}
+
+// ════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════
+const PAGE_TITLES = {
+  dashboard:'Dashboard', competitors:'Competitors', discover:'Discover Competitors',
+  insights:'Insights', reports:'Reports', settings:'Settings', detail:'Competitor'
+};
+
+function gotoPage(page, id) {
+  APP.currentPage = page;
+  if (id) APP.detailId = id;
+
+  closeSidebar(); // close mobile sidebar on navigation
+
+  // hide all pages, deactivate all nav items
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  // activate page
+  const pageEl = document.getElementById('page-' + page);
+  if (pageEl) pageEl.classList.add('active');
+
+  // activate nav
+  const navEl = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  // set title
+  let title = PAGE_TITLES[page] || page;
+  if (page === 'detail' && APP.detailId) {
+    const c = getComp(APP.detailId);
+    if (c) title = c.name;
+  }
+  document.getElementById('page-title').textContent = title;
+
+  // render
+  if (page === 'dashboard')   renderDashboard();
+  if (page === 'competitors') renderCompetitors();
+  if (page === 'detail')      renderDetail(APP.detailId);
+  if (page === 'insights')    renderInsights();
+  if (page === 'reports')     renderReports();
+  if (page === 'discover')    initDiscover();
+}
+
+// ════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════
+function getComp(id) { return APP.competitors.find(c => c.id === id) || null; }
+
+function allInsights() {
+  const list = [];
+  APP.competitors.forEach(c => {
+    (c.changes || []).forEach(ch => {
+      if (ch.insight) list.push({ ...ch, compId:c.id, compName:c.name });
+    });
+  });
+  return list.sort((a,b) => new Date(b.date) - new Date(a.date));
+}
+
+function weeklyChanges() {
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+  return APP.competitors.reduce((s,c) => s + (c.changes||[]).filter(ch => new Date(ch.date) > cutoff).length, 0);
+}
+
+function totalPages() {
+  return APP.competitors.reduce((s,c) => s + (c.pages||[]).length, 0);
+}
+
+function typeBadge(type) {
+  return `<span class="type-badge ${type}">${{pricing:'💰 Pricing',features:'⚡ Features',messaging:'📢 Messaging',blog:'📝 Blog'}[type]||type}</span>`;
+}
+
+// ════════════════════════════════════════
+// BADGES & STATS
+// ════════════════════════════════════════
+function refreshGlobal() {
+  const ins = allInsights().length;
+  document.getElementById('badge-comps').textContent   = APP.competitors.length;
+  document.getElementById('badge-insights').textContent = ins;
+  document.getElementById('s-comps').textContent    = APP.competitors.length;
+  document.getElementById('s-changes').textContent  = weeklyChanges();
+  document.getElementById('s-insights').textContent = ins;
+  document.getElementById('s-pages').textContent    = totalPages();
+}
+
+// ════════════════════════════════════════
+// RENDER: DASHBOARD
+// ════════════════════════════════════════
+function renderDashboard() {
+  refreshGlobal();
+
+  // recent competitors
+  const rc = document.getElementById('dash-comps');
+  if (!APP.competitors.length) {
+    rc.innerHTML = emptyState('🎯','No competitors yet','Add your first competitor to begin tracking.', true);
+  } else {
+    rc.innerHTML = APP.competitors.slice(0,3).map(c => miniCompCard(c)).join('');
+  }
+
+  // recent insights
+  const ri = document.getElementById('dash-insights');
+  const ins = allInsights().slice(0,3);
+  if (!ins.length) {
+    ri.innerHTML = emptyState('💡','No insights yet','Scan competitors and generate AI insights.');
+  } else {
+    ri.innerHTML = ins.map(i => miniInsightCard(i)).join('');
+  }
+}
+
+function miniCompCard(c) {
+  const n = (c.changes||[]).length;
+  return `<div class="comp-card" onclick="gotoPage('detail','${c.id}')" style="margin-bottom:10px">
+    <div class="cc-top">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="cc-avi">${c.emoji}</div>
+        <div><div class="cc-name">${esc(c.name)}</div><div class="cc-url">${esc(c.url)}</div></div>
+      </div>
+      <div class="cc-live">Live</div>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:var(--text3)">${c.pages.length} pages tracked</span>
+      ${n ? `<span class="chg-badge">⚡ ${n} changes</span>` : '<span style="font-size:12px;color:var(--text3)">Monitoring…</span>'}
+    </div>
+  </div>`;
+}
+
+function miniInsightCard(i) {
+  return `<div class="insight-card" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;flex-wrap:wrap;gap:6px">
+      <div style="display:flex;align-items:center;gap:7px">
+        <span class="ic-comp">${esc(i.compName)}</span>
+        <span class="ic-sep">•</span>
+        <span class="ic-pg">${esc(i.page)}</span>
+      </div>
+      ${typeBadge(i.type)}
+    </div>
+    <div class="ic-summary">${esc(i.summary)}</div>
+    <div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3);margin-top:6px">${fmtDate(i.date)}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// RENDER: COMPETITORS
+// ════════════════════════════════════════
+function renderCompetitors() {
+  const grid = document.getElementById('comp-grid');
+  if (!APP.competitors.length) {
+    grid.innerHTML = `<div style="grid-column:1/-1">${emptyState('🎯','No competitors yet','Add your first competitor to start monitoring.', true)}</div>`;
+    return;
+  }
+  grid.innerHTML = APP.competitors.map(c => {
+    const changes = c.changes||[];
+    const ins = changes.filter(ch=>ch.insight).length;
+    return `<div class="comp-card" onclick="gotoPage('detail','${c.id}')">
+      <div class="cc-top">
+        <div class="cc-avi">${c.emoji}</div>
+        <div class="cc-live">Live</div>
+      </div>
+      <div class="cc-name">${esc(c.name)}</div>
+      <div class="cc-url">${esc(c.url)}</div>
+      <div class="cc-tags">${c.pages.map(p=>`<span class="pg-tag">${esc(p)}</span>`).join('')}</div>
+      <div class="cc-foot">
+        <span class="cc-stat">Added ${fmtDate(c.addedAt)}</span>
+        ${changes.length ? `<span class="chg-badge">⚡ ${changes.length} changes · ${ins} insights</span>`
+                         : '<span style="font-size:12px;color:var(--text3)">Monitoring…</span>'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// RENDER: DETAIL
+// ════════════════════════════════════════
+function renderDetail(id) {
+  const c = getComp(id);
+  if (!c) { document.getElementById('detail-body').innerHTML = '<p style="color:var(--text3)">Competitor not found.</p>'; return; }
+  const changes = c.changes || [];
+
+  const timelineHtml = !changes.length
+    ? emptyState('🔍','No changes yet','Use "Scan Now" to check for updates.')
+    : changes.map(ch => {
+        const col = { pricing:'amber', features:'cyan', messaging:'purple', blog:'green' }[ch.type] || 'amber';
+        const ico = { pricing:'💰', features:'⚡', messaging:'📢', blog:'📝' }[ch.type] || '📊';
+        return `<div class="tl-item">
+          <div class="tl-dot ${col}">${ico}</div>
+          <div class="tl-body">
+            <div class="tl-date">${fmtDate(ch.date)}</div>
+            <div class="tl-ttl">${esc(ch.page)} — change detected</div>
+            <div class="tl-desc">${esc(ch.summary)}</div>
+            ${ch.insight ? insightBlock(ch.insight) : `<button class="scan-btn" style="margin-top:10px" onclick="generateInsight('${c.id}','${ch.id}',this)">✨ Generate AI Insight</button>`}
+          </div>
+        </div>`;
+      }).join('');
+
+  document.getElementById('detail-body').innerHTML = `
+    <div class="detail-hdr">
+      <div class="detail-avi">${c.emoji}</div>
+      <div class="detail-info">
+        <h2>${esc(c.name)}</h2>
+        <div class="detail-url">🌐 ${esc(c.url)}</div>
+        <div class="cc-tags">${c.pages.map(p=>`<span class="pg-tag">${esc(p)}</span>`).join('')}</div>
+      </div>
+      <div class="detail-acts">
+        <button class="scan-btn" id="scan-btn-${c.id}" onclick="scanNow('${c.id}')">🔍 Scan Now</button>
+        <button class="btn-danger" onclick="removeCompetitor('${c.id}')">Remove</button>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:24px">
+      <div class="card">
+        <div class="card-ttl">Monitored Pages</div>
+        ${c.pages.map(p=>{
+          const slug = p.toLowerCase();
+          return `<div class="mon-row">
+            <div><div class="mon-lbl">${esc(p)}</div><div class="mon-url">${esc(c.url)}/${slug}</div></div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--green)">
+              <div class="dot-live"></div> Live
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="card">
+        <div class="card-ttl">Quick Stats</div>
+        ${[
+          ['Changes Detected', changes.length],
+          ['AI Insights',      changes.filter(ch=>ch.insight).length],
+          ['Pages Tracked',    c.pages.length],
+          ['Tracking Since',   fmtDate(c.addedAt)],
+        ].map(([k,v])=>`<div class="mon-row" style="padding:9px 0">
+          <span style="font-size:13px;color:var(--text2)">${k}</span>
+          <strong style="font-size:13px">${v}</strong>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="sec-hdr"><div class="sec-ttl">Change Timeline</div></div>
+    <div class="timeline">${timelineHtml}</div>
+  `;
+}
+
+function insightBlock(ins) {
+  if (!ins) return '';
+  const safe = (v) => esc(v || '—'); // fallback to em dash if field missing
+  return `<div class="tl-insight">
+    <div class="tl-ins-lbl">⚡ AI Insight</div>
+    <div class="tl-ins-row"><strong>What changed:</strong> ${safe(ins.whatChanged)}</div>
+    <div class="tl-ins-row"><strong>Strategic meaning:</strong> ${safe(ins.strategic)}</div>
+    <div class="tl-ins-row"><strong>Their strategy:</strong> ${safe(ins.strategy)}</div>
+    <div class="tl-ins-act">🎯 <strong>Recommended action:</strong> ${safe(ins.action)}</div>
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// RENDER: INSIGHTS
+// ════════════════════════════════════════
+function renderInsights() {
+  // Refresh competitor filter options
+  const fComp = document.getElementById('f-comp');
+  const prevVal = fComp.value;
+  fComp.innerHTML = '<option value="">All Competitors</option>' +
+    APP.competitors.map(c=>`<option value="${c.id}" ${c.id===prevVal?'selected':''}>${esc(c.name)}</option>`).join('');
+
+  const filterComp = fComp.value;
+  const filterType = document.getElementById('f-type').value;
+  let list = allInsights();
+  if (filterComp) list = list.filter(i => i.compId === filterComp);
+  if (filterType) list = list.filter(i => i.type === filterType);
+
+  const el = document.getElementById('insights-body');
+  if (!list.length) {
+    el.innerHTML = emptyState('💡','No insights yet',
+      'Click "Generate AI Insight" on any detected change in a competitor\'s detail page.');
+    return;
+  }
+
+  el.innerHTML = list.map(i => {
+    const ins = i.insight;
+    return `<div class="insight-card">
+      <div class="ic-hdr">
+        <div class="ic-meta">
+          <span class="ic-comp">${esc(i.compName)}</span>
+          <span class="ic-sep">•</span>
+          <span class="ic-pg">${esc(i.page)}</span>
+          ${typeBadge(i.type)}
+        </div>
+        <span class="ic-date">${fmtDate(i.date)}</span>
+      </div>
+      <div class="ic-summary">${esc(i.summary)}</div>
+      <div class="ic-grid">
+        <div class="ic-box"><div class="ic-box-lbl">What Changed</div><div class="ic-box-txt">${esc(ins.whatChanged)}</div></div>
+        <div class="ic-box"><div class="ic-box-lbl">Competitor Strategy</div><div class="ic-box-txt">${esc(ins.strategy)}</div></div>
+      </div>
+      <div class="ic-box" style="margin-top:8px"><div class="ic-box-lbl">Strategic Meaning</div><div class="ic-box-txt">${esc(ins.strategic)}</div></div>
+      <div class="ic-action"><div class="ic-act-lbl">🎯 Recommended Action</div><div class="ic-act-txt">${esc(ins.action)}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════
+// RENDER: REPORTS
+// ════════════════════════════════════════
+function renderReports() {
+  const all = [];
+  APP.competitors.forEach(c => (c.changes||[]).forEach(ch => all.push({...ch, compName:c.name})));
+  all.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  const tbody = document.getElementById('reports-body');
+  if (!all.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text3)">No changes detected yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = all.map(ch => `<tr>
+    <td><strong>${esc(ch.compName)}</strong></td>
+    <td>${esc(ch.page)}</td>
+    <td>${typeBadge(ch.type)}</td>
+    <td style="font-family:'JetBrains Mono',monospace;font-size:12px">${fmtDate(ch.date)}</td>
+    <td>${ch.insight
+          ? '<span style="color:var(--green);font-weight:600">✅ Analyzed</span>'
+          : '<span style="color:var(--text3)">Pending</span>'}</td>
+  </tr>`).join('');
+}
+
+// ════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════
+function openAddModal()  {
+  document.getElementById('add-modal').classList.add('open');
+  document.getElementById('m-name').focus();
+}
+function closeAddModal() { document.getElementById('add-modal').classList.remove('open'); }
+
+document.getElementById('add-modal').addEventListener('click', function(e){
+  if (e.target === this) closeAddModal();
+});
+
+// close on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAddModal(); });
+
+function addCompetitor() {
+  const name    = document.getElementById('m-name').value.trim();
+  let   url     = document.getElementById('m-url').value.trim();
+  if (!name) { showToast('Please enter a competitor name.', 'error'); return; }
+  if (!url)  { showToast('Please enter a website URL.', 'error'); return; }
+
+  // Auto-fix missing protocol so URL is always valid
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+
+  const pages = [];
+  if (document.getElementById('p-home').checked)     pages.push('Homepage');
+  if (document.getElementById('p-pricing').checked)  pages.push('Pricing');
+  if (document.getElementById('p-features').checked) pages.push('Features');
+  if (document.getElementById('p-blog').checked)     pages.push('Blog');
+  if (!pages.length) { showToast('Select at least one page to monitor.', 'error'); return; }
+
+  // Prevent exact duplicates
+  if (APP.competitors.some(c => normaliseUrl(c.url) === normaliseUrl(url))) {
+    showToast(`Already monitoring that URL.`, 'warn'); return;
+  }
+
+  const emoji = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
+  const comp  = { id:uid(), name, url, emoji, pages, addedAt:new Date().toISOString(), changes:[] };
+  APP.competitors.push(comp);
+
+  // reset form
+  document.getElementById('m-name').value = '';
+  document.getElementById('m-url').value  = '';
+  document.getElementById('p-home').checked     = true;
+  document.getElementById('p-pricing').checked  = true;
+  document.getElementById('p-features').checked = false;
+  document.getElementById('p-blog').checked     = false;
+
+  closeAddModal();
+  refreshGlobal();
+  showToast(`✅ Now monitoring ${name}!`,'success');
+  gotoPage('competitors');
+
+  // simulate a first change after 1.8s
+  setTimeout(() => injectChange(comp.id), 1800);
+}
+
+function removeCompetitor(id) {
+  if (!confirm('Remove this competitor and all its data?')) return;
+  APP.competitors = APP.competitors.filter(c => c.id !== id);
+  refreshGlobal();
+  showToast('Competitor removed.','warn');
+  gotoPage('competitors');
+}
+
+function clearAllData() {
+  if (!confirm('This will remove all competitors and insights. Continue?')) return;
+  APP.competitors = [];
+  refreshGlobal();
+  showToast('All data cleared.','warn');
+  gotoPage('dashboard'); // gotoPage already calls renderDashboard()
+}
+
+// ════════════════════════════════════════
+// SCAN / INJECT CHANGES
+// ════════════════════════════════════════
+function scanNow(id) {
+  const btn = document.getElementById('scan-btn-' + id);
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spin"></div> Scanning…`;
+
+  setTimeout(() => {
+    injectChange(id);
+    btn.disabled = false;
+    btn.innerHTML = `🔍 Scan Now`;
+    renderDetail(id);
+    showToast('Scan complete — new change detected!','success');
+  }, 2200);
+}
+
+function injectChange(id) {
+  const c = getComp(id);
+  if (!c) return;
+  const pageMap = { Homepage:'messaging', Pricing:'pricing', Features:'features', Blog:'blog' };
+  const valid = c.pages.filter(p => pageMap[p]);
+  if (!valid.length) return;
+  const pg   = valid[Math.floor(Math.random() * valid.length)];
+  const type = pageMap[pg];
+  const pool = FAKE_CHANGES.filter(fc => fc.type === type);
+  const pick = pool[Math.floor(Math.random() * pool.length)] || FAKE_CHANGES[0];
+  c.changes.unshift({ id:uid(), page:pg, type, date:new Date().toISOString(), summary:pick.summary, insight:null });
+  refreshGlobal();
+}
+
+// ════════════════════════════════════════
+// AI INSIGHT GENERATION
+// ════════════════════════════════════════
+async function generateInsight(compId, changeId, btn) {
+  if (!APP.apiKey) {
+    showToast('⚠️ Paste your Anthropic API key in the bar above first!','error');
+    return;
+  }
+  const c  = getComp(compId);
+  const ch = c?.changes.find(x => x.id === changeId);
+  if (!c || !ch) return;
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spin"></div> Generating insight…`;
+
+  try {
+    const prompt = `You are a senior competitive intelligence analyst. Analyze the following competitor change and return a JSON insight report.
+
+Competitor: ${c.name} (${c.url})
+Page: ${ch.page}
+Change type: ${ch.type}
+Detected change: ${ch.summary}
+
+Respond with ONLY a raw JSON object — no markdown, no explanation, no code fences. Use these exact keys:
+{
+  "whatChanged": "Concise 1–2 sentence description of the change",
+  "strategic": "1–2 sentences on strategic significance for the competitor",
+  "strategy": "1–2 sentences on what competitive strategy this signals",
+  "action": "1–2 sentence recommended action for the reader's company"
+}`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': APP.apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 700,
+        messages: [{ role:'user', content:prompt }]
+      })
+    });
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = (data.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
+    const insight = JSON.parse(raw);
+
+    // Validate keys
+    if (!insight.whatChanged || !insight.strategic || !insight.strategy || !insight.action) {
+      throw new Error('Incomplete insight structure');
+    }
+
+    ch.insight = insight;
+    refreshGlobal();
+    renderDetail(compId);
+    showToast('✅ AI insight generated!','success');
+
+  } catch (err) {
+    console.error('AI Insight error:', err);
+    // Graceful fallback with mock insight
+    ch.insight = mockInsight(c, ch);
+    refreshGlobal();
+    renderDetail(compId);
+    showToast('⚠️ API unavailable — showing simulated insight','warn');
+  }
+}
+
+function mockInsight(c, ch) {
+  const bank = {
+    pricing: {
+      whatChanged: `${c.name} restructured their pricing, making a notable change to their plan lineup.`,
+      strategic:   'This signals a deliberate attempt to shift positioning — either moving upmarket or expanding accessibility to new customer segments.',
+      strategy:    `${c.name} is likely testing price sensitivity or responding to churn data indicating friction at their old price points.`,
+      action:      'Audit your pricing page for competitive gaps. Consider A/B testing a price point or tier that directly counters this change.'
+    },
+    features: {
+      whatChanged: `${c.name} introduced or updated a key product feature on their platform.`,
+      strategic:   'New feature releases typically signal product investment areas and help identify which customer problems they are prioritizing.',
+      strategy:    `${c.name} is deepening their product moat, likely to improve retention or win deals where this capability was a gap.`,
+      action:      'Assess if this feature is on your roadmap. If customers are asking for it, consider fast-tracking development or highlighting your alternative.'
+    },
+    messaging: {
+      whatChanged: `${c.name} updated their website messaging, refining how they communicate their value proposition.`,
+      strategic:   'Messaging changes often follow repositioning research or a shift in ICP (ideal customer profile) — a signal worth watching closely.',
+      strategy:    `${c.name} is likely refining their go-to-market narrative in response to customer feedback or pressure from competitors.`,
+      action:      'Compare their new messaging against yours. Identify if there are positioning opportunities they\'re moving toward that you should claim first.'
+    },
+    blog: {
+      whatChanged: `${c.name} published new content on their blog, targeting specific topics or keywords.`,
+      strategic:   'Consistent content in a specific area signals a long-term bet on organic growth and category ownership in that space.',
+      strategy:    `${c.name} is investing in SEO and thought leadership to attract buyers researching this topic — building pipeline ahead of intent.`,
+      action:      'Identify the keywords and topics they\'re targeting. Create a stronger or more comprehensive piece to rank above them and capture that traffic.'
+    }
+  };
+  return bank[ch.type] || bank.pricing;
+}
+
+// ════════════════════════════════════════
+// API KEY
+// ════════════════════════════════════════
+function saveApiKey() {
+  const key = document.getElementById('api-key-input').value.trim();
+  if (!key) { showToast('Please paste your API key first.','error'); return; }
+  APP.apiKey = key;
+  document.getElementById('settings-key').value = key;
+  showToast('🔑 API key saved!','success');
+}
+
+function saveKeyFromSettings() {
+  const key = document.getElementById('settings-key').value.trim();
+  if (!key) { showToast('Please paste your API key first.','error'); return; }
+  APP.apiKey = key;
+  document.getElementById('api-key-input').value = key;
+  showToast('🔑 API key saved!','success');
+}
+
+async function testKey() {
+  if (!APP.apiKey) { showToast('No API key saved yet.','error'); return; }
+  showToast('Testing connection…','warn');
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-api-key':APP.apiKey, 'anthropic-version':'2023-06-01', 'anthropic-dangerous-direct-browser-access':'true' },
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:5, messages:[{role:'user',content:'Hi'}] })
+    });
+    const d = await r.json();
+    if (d.error) throw new Error(d.error.message);
+    showToast('✅ Connection successful!','success');
+  } catch(e) {
+    showToast('❌ Connection failed — check your key.','error');
+  }
+}
+
+// ════════════════════════════════════════
+// EMPTY STATE
+// ════════════════════════════════════════
+function emptyState(ico, title, desc, addBtn) {
+  return `<div class="empty">
+    <div class="empty-ico">${ico}</div>
+    <div class="empty-ttl">${title}</div>
+    <div class="empty-txt">${desc}</div>
+    ${addBtn ? `<button class="btn-primary" onclick="openAddModal()">＋ Add Competitor</button>` : ''}
+  </div>`;
+}
+
+// ════════════════════════════════════════
+// TOAST
+// ════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'toast ' + type;
+  // force reflow so transition fires even if called rapidly
+  void t.offsetHeight;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ════════════════════════════════════════
+// XSS HELPER
+// ════════════════════════════════════════
+function esc(str) {
+  return String(str ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#x27;');
+}
+
+// ════════════════════════════════════════
+// DISCOVER COMPETITORS
+// ════════════════════════════════════════
+
+// Normalise URL for comparison (strip protocol + trailing slash)
+// If full=true, ensure https:// prefix for storage
+function normaliseUrl(url, full) {
+  let u = (url || '').trim();
+  if (full) {
+    // ensure stored URLs always have https://
+    if (u && !/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+  return u.replace(/^https?:\/\//i,'').replace(/\/$/,'').toLowerCase();
+}
+
+function togglePill(el) {
+  el.classList.toggle('active');
+}
+
+function initDiscover() {
+  // nothing to reset — preserve any results already shown
+}
+
+async function runDiscover() {
+  const product  = document.getElementById('disc-product').value.trim();
+  const audience = document.getElementById('disc-audience').value.trim();
+  const problem  = document.getElementById('disc-problem').value.trim();
+
+  if (!product)  { showToast('Please enter your product name.','error'); return; }
+  if (!problem)  { showToast('Please describe what your product solves.','error'); return; }
+
+  const activePills = [...document.querySelectorAll('.type-pill.active')].map(p => p.dataset.type);
+  if (!activePills.length) { showToast('Select at least one competitor type.','error'); return; }
+
+  const btn = document.getElementById('disc-run-btn');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spin" style="border-top-color:var(--amber);border-color:rgba(245,158,11,0.3)"></div> Analyzing…`;
+
+  const out = document.getElementById('disc-output');
+  out.innerHTML = `<div class="disc-loading">
+    <div class="disc-loading-ring"></div>
+    <div class="disc-loading-txt">Mapping your competitive landscape…</div>
+    <div class="disc-loading-sub">AI is researching direct, indirect &amp; emerging competitors</div>
+  </div>`;
+
+  try {
+    let results;
+    if (APP.apiKey) {
+      results = await discoverViaAPI(product, audience, problem, activePills);
+    } else {
+      await new Promise(r => setTimeout(r, 1800));
+      results = mockDiscoverResults(product, activePills);
+    }
+    renderDiscoverResults(results);
+  } catch(err) {
+    console.error('Discover error:', err);
+    out.innerHTML = '';
+    renderDiscoverResults(mockDiscoverResults(product, activePills));
+    showToast('⚠️ API error — showing simulated results','warn');
+  } finally {
+    // ALWAYS re-enable the button regardless of success/fail/exception
+    btn.disabled = false;
+    btn.innerHTML = '🔭 Find My Competitors';
+  }
+}
+
+async function discoverViaAPI(product, audience, problem, types) {
+  const typeDescriptions = {
+    direct:       'Direct competitors — same product, same audience',
+    indirect:     'Indirect competitors — different product but solves the same problem',
+    replacement:  'Replacement competitors — free/DIY alternatives customers use instead',
+    aspirational: 'Emerging/aspirational threats — adjacent companies that could enter your space'
+  };
+  const typeList = types.map(t => `- ${typeDescriptions[t]}`).join('\n');
+
+  const prompt = `You are a world-class competitive intelligence analyst.
+
+Product: ${product}
+Target audience: ${audience || 'general'}
+Problem it solves: ${problem}
+
+Find real, well-known competitors in these categories:
+${typeList}
+
+Return ONLY a raw JSON array (no markdown, no explanation, no code fences). Each item must have:
+{
+  "name": "Company name",
+  "url": "https://...",
+  "emoji": "one relevant emoji",
+  "type": "direct|indirect|replacement|aspirational",
+  "why": "2-sentence explanation of why they are a competitor and what threat they pose",
+  "tags": ["tag1","tag2","tag3"]
+}
+
+Return 3–4 items per selected type. Real company names and URLs only. No fictional companies.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': APP.apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 2000,
+      messages: [{ role:'user', content:prompt }]
+    })
+  });
+
+  const data = await res.json();
+  if (data.error) throw new Error(data.error.message);
+  const raw = (data.content?.[0]?.text || '').replace(/```json|```/g,'').trim();
+  const arr = JSON.parse(raw);
+  if (!Array.isArray(arr)) throw new Error('Not an array');
+  return arr;
+}
+
+function mockDiscoverResults(product, types) {
+  const pools = {
+    direct: [
+      { name:'Notion',      url:'https://notion.so',       emoji:'📝', type:'direct',      why:`Notion directly competes with ${product} for the same audience. They have massive brand recognition, a freemium model, and are deeply embedded in many teams' workflows.`, tags:['All-in-one','Freemium','Docs + Tasks'] },
+      { name:'Asana',       url:'https://asana.com',        emoji:'✅', type:'direct',      why:'Asana targets the same project management space with enterprise-grade features. Their strong sales motion makes them a consistent competitor in deal cycles.',              tags:['Enterprise','Project Mgmt','Workflows'] },
+      { name:'Monday.com',  url:'https://monday.com',       emoji:'📅', type:'direct',      why:'Monday.com competes head-on with heavy marketing spend and a flexible, visual interface. They frequently show up in the same competitive evaluations.',                   tags:['Visual','No-code','Teams'] },
+      { name:'ClickUp',     url:'https://clickup.com',      emoji:'🖱️', type:'direct',      why:'ClickUp positions itself as the "everything app" and aggressively undercuts competitors on price. They are growing fast and winning price-sensitive buyers.',              tags:['All-in-one','Affordable','Feature-rich'] },
+    ],
+    indirect: [
+      { name:'Slack',        url:'https://slack.com',       emoji:'💬', type:'indirect',    why:'Slack solves the "team coordination" problem differently through real-time messaging. Teams often choose Slack over structured tools like yours for its lower friction.',   tags:['Messaging','Real-time','Integrations'] },
+      { name:'Google Workspace', url:'https://workspace.google.com', emoji:'🔵', type:'indirect', why:'Google Workspace provides Docs, Sheets and Chat — a free, good-enough alternative that millions of teams already use, reducing urgency to buy dedicated tools.',    tags:['Free','Familiar','Google'] },
+      { name:'Airtable',     url:'https://airtable.com',    emoji:'📊', type:'indirect',    why:'Airtable solves the same organisational problems with a database-first approach. Technically different but functionally an alternative in many buying decisions.',         tags:['Database','Flexible','Visual'] },
+      { name:'Trello',       url:'https://trello.com',      emoji:'🗂️', type:'indirect',    why:'Trello\'s Kanban boards address the same workflow visibility need with extreme simplicity. Often the first tool teams try before looking for more powerful options.',      tags:['Kanban','Simple','Atlassian'] },
+    ],
+    replacement: [
+      { name:'GitHub Issues', url:'https://github.com',     emoji:'🐙', type:'replacement', why:'Developer teams often use GitHub Issues as a free, built-in project tracker. They actively avoid buying separate tools if GitHub satisfies their core need.',              tags:['Free','Built-in','Dev teams'] },
+      { name:'Email + Spreadsheets', url:'https://sheets.google.com', emoji:'📧', type:'replacement', why:'The most common DIY alternative. Many small teams manage projects entirely in Gmail threads and Google Sheets — avoiding any paid tool purchase.',               tags:['Free','DIY','No onboarding'] },
+      { name:'Jira (free tier)', url:'https://atlassian.com/jira', emoji:'🔵', type:'replacement', why:'Jira\'s free tier supports up to 10 users, making it a compelling "good enough" choice that prevents teams from paying for newer alternatives.',                  tags:['Free tier','Atlassian','Dev-focused'] },
+    ],
+    aspirational: [
+      { name:'Linear',       url:'https://linear.app',      emoji:'⚡', type:'aspirational', why:'Linear is the darling of product teams and growing fast. Their obsession with speed and design quality is reshaping buyer expectations — and could expand into your market.', tags:['Fastest growing','Design-led','Product teams'] },
+      { name:'Figma / FigJam', url:'https://figma.com',     emoji:'🎨', type:'aspirational', why:'Figma has expanded beyond design into collaborative planning. Their enterprise relationships and whiteboarding ambitions position them to absorb adjacent categories.',    tags:['Enterprise','Design teams','Expanding'] },
+      { name:'Loom',         url:'https://loom.com',         emoji:'🎥', type:'aspirational', why:'Loom is redefining async communication and now exploring project context features. As async work grows, video-first tools could replace traditional text-based ones.',    tags:['Async video','Growing','Atlassian'] },
+      { name:'Notion AI',    url:'https://notion.so/ai',     emoji:'🤖', type:'aspirational', why:'As Notion adds more AI features, the gap between a doc tool and a full project suite narrows. Their AI roadmap is a long-term threat to workflow-specific tools.',       tags:['AI-native','Expanding','High retention'] },
+    ]
+  };
+
+  const result = [];
+  types.forEach(t => { if (pools[t]) result.push(...pools[t].slice(0,3)); });
+  return result;
+}
+
+// Safe lookup map so onclick never passes raw strings through HTML attributes
+const DISC_MAP = {};
+
+function renderDiscoverResults(results) {
+  if (!results || !results.length) {
+    document.getElementById('disc-output').innerHTML = emptyState('🔭','No results','Try adjusting your description or selecting different competitor types.');
+    return;
+  }
+
+  const typeOrder = ['direct','indirect','replacement','aspirational'];
+  const typeMeta = {
+    direct:       { label:'Direct Competitors',       desc:'Same product, same buyer',                      dot:'direct',       icon:'🎯' },
+    indirect:     { label:'Indirect Competitors',     desc:'Different product, same problem',               dot:'indirect',     icon:'🌀' },
+    replacement:  { label:'Replacement Alternatives', desc:'Free / DIY options customers use instead',      dot:'replacement',  icon:'🔄' },
+    aspirational: { label:'Emerging Threats',         desc:'Adjacent players who could enter your space',   dot:'aspirational', icon:'🚀' },
+  };
+
+  // track which URLs are already being monitored (normalised)
+  const monitoredUrls = new Set(
+    APP.competitors.map(c => normaliseUrl(c.url))
+  );
+
+  // Populate DISC_MAP with safe data keyed by a numeric token
+  // Clear previous entries first
+  Object.keys(DISC_MAP).forEach(k => delete DISC_MAP[k]);
+
+  let html = '';
+  typeOrder.forEach(type => {
+    const items = results.filter(r => r.type === type);
+    if (!items.length) return;
+    const m = typeMeta[type];
+    html += `<div style="margin-bottom:22px">
+      <div class="disc-section-hdr" style="margin-bottom:12px">
+        <div class="disc-section-dot ${m.dot}"></div>
+        <div class="disc-section-label">${m.icon} ${esc(m.label)}</div>
+        <div class="disc-section-desc">${esc(m.desc)}</div>
+      </div>
+      <div class="disc-results">
+        ${items.map(comp => {
+          const normUrl    = normaliseUrl(comp.url || '');
+          const alreadyAdded = monitoredUrls.has(normUrl);
+          const token      = 'dk' + uid().replace(/\W/g,'');
+          // Store full data safely — no serialisation through HTML
+          DISC_MAP[token]  = { name: comp.name||'', url: comp.url||'', emoji: comp.emoji||'🏢' };
+          return `<div class="disc-card">
+            <div class="disc-card-ico">${esc(comp.emoji||'🏢')}</div>
+            <div class="disc-card-info">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;flex-wrap:wrap">
+                <div class="disc-card-name">${esc(comp.name)}</div>
+                <span class="disc-type-badge ${type}">${m.icon} ${type}</span>
+              </div>
+              <div class="disc-card-url">${esc(comp.url)}</div>
+              <div class="disc-card-why">${esc(comp.why)}</div>
+              <div class="disc-card-tags">${(comp.tags||[]).map(t=>`<span class="disc-tag">${esc(t)}</span>`).join('')}</div>
+            </div>
+            <div class="disc-card-actions">
+              ${alreadyAdded
+                ? `<button class="disc-add-btn" disabled>✅ Monitoring</button>`
+                : `<button class="disc-add-btn" data-token="${token}" onclick="discoverAddCompetitor(this)">＋ Monitor</button>`
+              }
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('disc-output').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:15px;font-weight:700">Found ${results.length} competitor${results.length!==1?'s':''}</div>
+        <div style="font-size:13px;color:var(--text3);margin-top:2px">Click "＋ Monitor" to start tracking any of these</div>
+      </div>
+      <button class="btn-outline" onclick="runDiscover()">🔄 Re-run Analysis</button>
+    </div>
+    ${html}`;
+}
+
+function discoverAddCompetitor(btn) {
+  const token = btn.dataset.token;
+  const data  = DISC_MAP[token];
+  if (!data) { showToast('Could not read competitor data — please re-run.','error'); return; }
+
+  const { name, url, emoji } = data;
+  const comp = {
+    id: uid(), name, url: normaliseUrl(url, true), emoji,
+    pages: ['Homepage','Pricing'],
+    addedAt: new Date().toISOString(),
+    changes: []
+  };
+  APP.competitors.push(comp);
+  refreshGlobal();
+
+  btn.disabled = true;
+  btn.textContent = '✅ Monitoring';
+
+  showToast(`✅ Now monitoring ${name}!`, 'success');
+  setTimeout(() => injectChange(comp.id), 2000);
+}
+
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
+(function init() {
+  seedData();
+  refreshGlobal();
+  renderDashboard();
+})();
+</script>
+</body>
+</html>
